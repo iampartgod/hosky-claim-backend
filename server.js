@@ -1,73 +1,49 @@
-const express = require("express");
-const cors = require("cors");
-const bodyParser = require("body-parser");
-const Database = require("better-sqlite3");
+const express = require('express');
+const cors = require('cors');
+const Database = require('better-sqlite3');
 
 const app = express();
-app.use(cors());
-app.use(bodyParser.json());
-
-const db = new Database("./claims.db");
-
-// Temporary reset endpoint — REMOVE after use!
-app.post("/reset-codes", (req, res) => {
-  try {
-    db.prepare("UPDATE claim_codes SET used = 0").run();
-    res.json({ success: true, message: "All claim codes have been reset." });
-  } catch (error) {
-    console.error("Error resetting codes:", error);
-    res.status(500).json({ success: false, message: "Reset failed." });
-  }
-});
-
-// Create table if not exists
-db.prepare(`
-  CREATE TABLE IF NOT EXISTS claim_codes (
-    code TEXT PRIMARY KEY,
-    used INTEGER DEFAULT 0,
-    message TEXT
-  )
-`).run();
-
-// Insert seed data if not present (comment this block out after first run)
-for (const item of seedData) {
-  db.prepare("INSERT OR IGNORE INTO claim_codes (code, message) VALUES (?, ?)").run(item.code, item.message);
-}
-
-// POST /check-claim endpoint
-app.post("/check-claim", (req, res) => {
-  const { claimId } = req.body;
-  if (!claimId || typeof claimId !== "string") {
-    return res.status(400).json({ success: false, message: "Invalid request." });
-  }
-
-  const code = claimId.toUpperCase();
-
-  try {
-    const row = db.prepare("SELECT * FROM claim_codes WHERE code = ?").get(code);
-
-    if (!row) {
-      return res.json({ success: false, message: "Invalid Claim ID." });
-    }
-
-    if (row.used) {
-      return res.json({ success: false, message: "This Claim ID has already been used." });
-    }
-
-    // Mark as used
-    db.prepare("UPDATE claim_codes SET used = 1 WHERE code = ?").run(code);
-
-    return res.json({
-      success: true,
-      message: row.message || "🎉 You have claimed your HOSKY reward!",
-    });
-  } catch (error) {
-    console.error(error);
-    return res.status(500).json({ success: false, message: "Server error." });
-  }
-});
-
 const PORT = process.env.PORT || 3000;
+
+app.use(cors());
+app.use(express.json());
+
+const db = new Database('claims.db');
+
+// Check if a claim code is valid and unused
+app.post('/check-claim', (req, res) => {
+  const { claimId } = req.body;
+
+  const stmt = db.prepare("SELECT * FROM claim_codes WHERE code = ? AND used = 0");
+  const row = stmt.get(claimId.toUpperCase());
+
+  if (row) {
+    // Mark code as used
+    db.prepare("UPDATE claim_codes SET used = 1 WHERE code = ?").run(claimId.toUpperCase());
+    res.json({ success: true, message: row.message });
+  } else {
+    res.json({ success: false, message: "Invalid or already used Claim ID." });
+  }
+});
+
+// Submit Discord username
+app.post('/submit-discord', (req, res) => {
+  const { code, discord } = req.body;
+  db.prepare("UPDATE claim_codes SET discord = ? WHERE code = ?").run(discord, code.toUpperCase());
+  res.json({ success: true });
+});
+
+// ✅ GET claims-left route
+app.get('/claims-left', (req, res) => {
+  try {
+    const result = db.prepare("SELECT COUNT(*) as remaining FROM claim_codes WHERE used = 0").get();
+    res.json({ remaining: result.remaining });
+  } catch (err) {
+    console.error("Error in /claims-left:", err);
+    res.status(500).json({ error: "Database error" });
+  }
+});
+
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
