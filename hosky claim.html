@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>HOSKY RARE EVO 2025 Scratchers Claim</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: 'Press Start 2P', monospace;
+      background-color: #0000FF;
+      color: #ffffff;
+      text-align: center;
+      background-image: url('https://hosky.io/_next/image?url=%2Fgrid.png&w=1920&q=75');
+      background-size: cover;
+    }
+    header {
+      padding: 2rem 1rem 1rem;
+    }
+    .logo {
+      width: 100px;
+      height: auto;
+      margin-bottom: 1rem;
+    }
+    h1 {
+      font-size: 1.25rem;
+      margin-bottom: 0.5rem;
+    }
+    .claim-box {
+      max-width: 500px;
+      margin: 2rem auto;
+      padding: 2rem 1rem;
+      background: transparent;
+    }
+    input[type="text"] {
+      width: 90%;
+      padding: 1rem;
+      margin-bottom: 1rem;
+      border: none;
+      border-radius: 8px;
+      font-size: 1rem;
+      background: #111;
+      color: #fff;
+      box-shadow: 0 0 10px #00aaff80 inset;
+    }
+    button {
+      padding: 1rem 2rem;
+      font-size: 1rem;
+      background-color: #00aaff;
+      color: #000;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: background 0.3s ease;
+      box-shadow: 0 0 10px #00aaff99;
+    }
+    button:hover {
+      background-color: #008ecc;
+    }
+    #result {
+      margin-top: 2rem;
+      font-size: 1rem;
+      color: #ffffff;
+      min-height: 70px;
+    }
+    .hosky-doge {
+      font-size: 3rem;
+      margin-top: 1rem;
+    }
+    footer {
+      margin-top: 4rem;
+      font-size: 0.75rem;
+      color: #ffffff;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <img
+      src="https://hosky.io/_next/image?url=%2F_next%2Fstatic%2Fmedia%2FHosky_1200.9361cc3f.png&w=3840&q=75&dpl=dpl_FTXvPeFoVfhnZcx51YBD7T4mNDJf"
+      alt="HOSKY Logo"
+      class="logo"
+    />
+    <h1>💩 HOSKY RARE EVO 2025 Scratchers Claim 💩</h1>
+    <p>Enter your <strong>Claim ID</strong> below:</p>
+  </header>
+
+  <div class="claim-box">
+    <input type="text" id="claimId" placeholder="Enter Claim ID" autocomplete="off" />
+    <br />
+    <button onclick="checkClaim()">CLAIM</button>
+    <div id="result"></div>
+  </div>
+
+  <footer>
+    &copy; 2025 Rare Evo | HOSKY Degeneracy Division | For degenerates, by degenerates. | Ran by @IAmPartGod | DM me on Discord for any question @IAmPartGod#1173
+  </footer>
+
+  <script>
+    const API_URL = "https://hosky-claim-backend.onrender.com/check-claim";
+
+    function checkClaim() {
+      const id = document.getElementById("claimId").value.trim().toUpperCase();
+      const resultDiv = document.getElementById("result");
+
+      if (!id || id.length < 4) {
+        resultDiv.innerHTML = "⚠️ Invalid Claim ID.";
+        return;
+      }
+
+      fetch(API_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ claimId: id }),
+      })
+        .then((response) => response.json())
+        .then((data) => {
+          if (data.success) {
+            confetti({
+              particleCount: 150,
+              spread: 100,
+              origin: { y: 0.6 },
+            });
+            resultDiv.innerHTML = `<div class="hosky-doge">🐶</div><p>${data.message}</p>`;
+          } else {
+            const loserMessages = [
+              "😬 Nope. Try again?",
+              "🛌 Nothing here. Keep scratching.",
+              "💩 RUGGED. That’s how it goes.",
+              "🐕‍🧻 Hosky ate your claim ID. Sorry.",
+            ];
+            // Use backend message or random fallback
+            const msg = data.message || loserMessages[Math.floor(Math.random() * loserMessages.length)];
+            resultDiv.innerHTML = `<div class="hosky-doge">🙈</div><p>${msg}</p>`;
+          }
+        })
+        .catch(() => {
+          resultDiv.innerHTML = "⚠️ Server error. Please try again later.";
+        });
+    }
+  </script>
+</body>
+</html>
