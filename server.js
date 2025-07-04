@@ -11,24 +11,25 @@ app.use(express.json());
 
 const db = new Database('claims.db');
 
-// Admin credentials (choose your own secure username/password)
-const adminUser = 'admin';
-const adminPass = 'yourStrongPassword';
+// Read admin credentials from environment variables or fallback defaults
+const adminUser = process.env.ADMIN_USER || 'admin';
+const adminPass = process.env.ADMIN_PASS || 'changeme';
 
 // Basic Auth middleware for /admin routes
 app.use('/admin', basicAuth({
   users: { [adminUser]: adminPass },
   challenge: true,
+  unauthorizedResponse: (req) => 'Unauthorized'
 }));
 
-// Endpoint to submit Discord username (no change)
+// Endpoint to submit Discord username
 app.post('/submit-discord', (req, res) => {
-  const { code, discord } = req.body;
-  if (!code || !discord) {
-    return res.status(400).json({ success: false, message: "Missing code or Discord name." });
+  const { claimId, discord } = req.body;
+  if (!claimId || !discord) {
+    return res.status(400).json({ success: false, message: "Missing claimId or discord username." });
   }
   try {
-    const result = db.prepare("UPDATE claim_codes SET discord = ? WHERE code = ?").run(discord, code.toUpperCase());
+    const result = db.prepare("UPDATE claim_codes SET discord = ? WHERE code = ?").run(discord, claimId.toUpperCase());
     if (result.changes === 0) {
       return res.status(404).json({ success: false, message: "Claim ID not found." });
     }
