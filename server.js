@@ -1,65 +1,77 @@
 const express = require('express');
-const cors = require('cors');
-const Database = require('better-sqlite3');
 const basicAuth = require('express-basic-auth');
-
+const Database = require('better-sqlite3');
 const app = express();
-const PORT = process.env.PORT || 3000;
-
-app.use(cors());
-app.use(express.json());
 
 const db = new Database('claims.db');
 
-// Read admin credentials from environment variables or fallback defaults
-const adminUser = process.env.ADMIN_USER || 'admin';
-const adminPass = process.env.ADMIN_PASS || 'changeme';
+const ADMIN_USER = process.env.ADMIN_USER || 'admin';
+const ADMIN_PASS = process.env.ADMIN_PASS || 'password';
 
-// Basic Auth middleware for /admin routes
-app.use('/admin', basicAuth({
-  users: { [adminUser]: adminPass },
+app.use(express.json());
+
+// Your existing routes here (check-claim, submit-discord, etc.)
+
+// Admin dashboard route with basic auth
+app.use('/admin/dashboard', basicAuth({
+  users: { [ADMIN_USER]: ADMIN_PASS },
   challenge: true,
   unauthorizedResponse: (req) => 'Unauthorized'
 }));
 
-// Endpoint to submit Discord username
-app.post('/submit-discord', (req, res) => {
-  const { claimId, discord } = req.body;
-  if (!claimId || !discord) {
-    return res.status(400).json({ success: false, message: "Missing claimId or discord username." });
-  }
-  try {
-    const result = db.prepare("UPDATE claim_codes SET discord = ? WHERE code = ?").run(discord, claimId.toUpperCase());
-    if (result.changes === 0) {
-      return res.status(404).json({ success: false, message: "Claim ID not found." });
-    }
-    res.json({ success: true });
-  } catch (err) {
-    console.error("DB error:", err);
-    res.status(500).json({ success: false, message: "Server error." });
-  }
-});
-
-// Admin dashboard to view codes + Discord usernames
 app.get('/admin/dashboard', (req, res) => {
   try {
-    const rows = db.prepare('SELECT code, discord FROM claim_codes WHERE discord IS NOT NULL').all();
+    const rows = db.prepare('SELECT claim_code, discord_username, used FROM claim_codes').all();
+
     let html = `
-      <h1>HOSKY Claim Discord Dashboard</h1>
-      <table border="1" cellpadding="5" cellspacing="0">
-        <tr><th>Claim Code</th><th>Discord Username</th></tr>
+      <html>
+      <head>
+        <title>HOSKY Admin Dashboard</title>
+        <style>
+          body { font-family: monospace; background: #111; color: #0ff; padding: 1rem; }
+          table { width: 100%; border-collapse: collapse; }
+          th, td { border: 1px solid #0ff; padding: 0.5rem; text-align: left; }
+          th { background: #004466; }
+        </style>
+      </head>
+      <body>
+        <h1>HOSKY Admin Dashboard</h1>
+        <table>
+          <thead>
+            <tr>
+              <th>Claim Code</th>
+              <th>Discord Username</th>
+              <th>Used</th>
+            </tr>
+          </thead>
+          <tbody>
     `;
 
-    for (const row of rows) {
-      html += `<tr><td>${row.code}</td><td>${row.discord}</td></tr>`;
-    }
-    html += '</table>';
+    rows.forEach(row => {
+      html += `
+        <tr>
+          <td>${row.claim_code}</td>
+          <td>${row.discord_username || '-'}</td>
+          <td>${row.used ? 'Yes' : 'No'}</td>
+        </tr>
+      `;
+    });
+
+    html += `
+          </tbody>
+        </table>
+      </body>
+      </html>
+    `;
+
     res.send(html);
   } catch (err) {
-    res.status(500).send('Server error loading dashboard.');
+    res.status(500).send('Server error');
   }
 });
 
+// Start your server here as usual
+const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
+  console.log(`Server listening on port ${PORT}`);
 });
