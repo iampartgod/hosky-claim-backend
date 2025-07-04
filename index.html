@@ -11,11 +11,11 @@
       margin: 0;
       padding: 0;
       font-family: 'Press Start 2P', monospace;
-      background-color: #0000FF;
-      color: #ffffff;
-      text-align: center;
+      background-color: #3a7ff7;
       background-image: url('https://hosky.io/_next/image?url=%2Fgrid.png&w=1920&q=75');
       background-size: cover;
+      color: #ffffff;
+      text-align: center;
     }
     header {
       padding: 2rem 1rem 1rem;
@@ -27,13 +27,14 @@
     }
     h1 {
       font-size: 1.25rem;
+      color: #ffffff;
       margin-bottom: 0.5rem;
     }
     .claim-box {
+      background: transparent;
       max-width: 500px;
       margin: 2rem auto;
       padding: 2rem 1rem;
-      background: transparent;
     }
     input[type="text"] {
       width: 90%;
@@ -43,7 +44,7 @@
       border-radius: 8px;
       font-size: 1rem;
       background: #111;
-      color: #fff;
+      color: #ffffff;
       box-shadow: 0 0 10px #00aaff80 inset;
     }
     button {
@@ -78,6 +79,9 @@
   </style>
 </head>
 <body>
+  <audio id="winSound" src="https://www.myinstants.com/media/sounds/mlg-airhorn.mp3"></audio>
+  <audio id="failSound" src="https://www.myinstants.com/media/sounds/wrong-answer-sound-effect.mp3"></audio>
+
   <header>
     <img
       src="https://hosky.io/_next/image?url=%2F_next%2Fstatic%2Fmedia%2FHosky_1200.9361cc3f.png&w=3840&q=75&dpl=dpl_FTXvPeFoVfhnZcx51YBD7T4mNDJf"
@@ -101,13 +105,19 @@
 
   <script>
     const API_URL = "https://hosky-claim-backend.onrender.com/check-claim";
+    let cooldown = false;
 
     function checkClaim() {
+      if (cooldown) return;
+      cooldown = true;
+      setTimeout(() => cooldown = false, 3000);
+
       const id = document.getElementById("claimId").value.trim().toUpperCase();
       const resultDiv = document.getElementById("result");
 
       if (!id || id.length < 4) {
         resultDiv.innerHTML = "⚠️ Invalid Claim ID.";
+        document.getElementById("failSound").play();
         return;
       }
 
@@ -124,15 +134,16 @@
               spread: 100,
               origin: { y: 0.6 },
             });
+            document.getElementById("winSound").play();
             resultDiv.innerHTML = `<div class="hosky-doge">🐶</div><p>${data.message}</p>`;
           } else {
+            document.getElementById("failSound").play();
             const loserMessages = [
               "😬 Nope. Try again?",
               "🛌 Nothing here. Keep scratching.",
               "💩 RUGGED. That’s how it goes.",
               "🐕‍🧻 Hosky ate your claim ID. Sorry.",
             ];
-            // Use backend message or random fallback
             const msg = data.message || loserMessages[Math.floor(Math.random() * loserMessages.length)];
             resultDiv.innerHTML = `<div class="hosky-doge">🙈</div><p>${msg}</p>`;
           }
