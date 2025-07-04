@@ -33,6 +33,12 @@ app.post('/submit-discord', (req, res) => {
   res.json({ success: true });
 });
 
+app.get('/claims-left', (req, res) => {
+  const stmt = db.prepare('SELECT COUNT(*) AS count FROM claim_codes WHERE used = 0');
+  const row = stmt.get();
+  res.json({ claimsLeft: row.count });
+});
+
 // ✅ GET claims-left route
 app.get('/claims-left', (req, res) => {
   try {
