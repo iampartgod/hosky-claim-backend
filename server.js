@@ -22,13 +22,6 @@ db.prepare(`
 // Insert initial winning codes (run once)
 const insert = db.prepare('INSERT OR IGNORE INTO claim_codes (id, message) VALUES (?, ?)');
 
-insert.run('DEEZNUTS', '🌰 Congrats! You won 6,900,420 HOSKY!');
-insert.run('WEN10K', '🚀 10K soon? You just earned 4,200,000 HOSKY!');
-insert.run('CERFCERF', '🐸 CERF vibes! You got 6,000,000 HOSKY!');
-insert.run('HOSKY', '🐶 Big Doge Energy! You hit 5,000,000 HOSKY!');
-insert.run('BUSYBUSY', '💼 Hustle pays. 5,000,000 HOSKY for you!');
-insert.run('IAMPARTGOD', '💯 AW U FOUND MA CODE! RUGGED! 10,000,000 HOSKY FOR U IDJIOT');
-
 // Endpoint to check claim
 app.post('/check-claim', (req, res) => {
   const claimId = (req.body.claimId || '').toUpperCase().trim();
