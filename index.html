@@ -34,11 +34,6 @@
       margin-bottom: 0.5rem;
     }
 
-    #claims-left {
-      font-size: 1rem;
-      margin-top: 1rem;
-    }
-
     .claim-box {
       background: transparent;
       max-width: 500px;
@@ -115,11 +110,7 @@
   </footer>
 
   <script>
-    const API_CLAIM = "https://hosky-claim-backend.onrender.com/check-claim";
-    const API_COUNT = "https://hosky-claim-backend.onrender.com/claims-left";
-    const API_DISCORD = "https://hosky-claim-backend.onrender.com/submit-discord";
-
-    async function checkClaim() {
+    function checkClaim() {
       const id = document.getElementById("claimId").value.trim().toUpperCase();
       const resultDiv = document.getElementById("result");
 
@@ -129,67 +120,29 @@
         return;
       }
 
-      try {
-        const res = await fetch(API_CLAIM, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ claimId: id })
-        });
+      const isWinner = Math.random() < 0.4; // 40% chance of winning
+      if (isWinner) {
+        confetti({ particleCount: 150, spread: 100, origin: { y: 0.6 } });
+        document.getElementById("winSound").play();
 
-        const data = await res.json();
-
-        if (data.success) {
-          confetti({ particleCount: 150, spread: 100, origin: { y: 0.6 } });
-          document.getElementById("winSound").play();
-
-          const discordInput = `<input type='text' id='discordName' placeholder='Enter Discord username'>`;
-          const submitBtn = `<button onclick='submitDiscord("${id}")'>Submit Discord</button>`;
-
-          resultDiv.innerHTML = `<div class="hosky-doge">🐶</div><p>${data.message}</p>${discordInput}<br>${submitBtn}`;
-        } else {
-          const loserMessages = [
-            "😬 Nope. Try again?",
-            "🛌 Nothing here. Keep scratching.",
-            "💩 RUGGED. That’s how it goes.",
-            "🐕‍🧻 Hosky ate your claim ID. Sorry."
-          ];
-          const msg = data.message || loserMessages[Math.floor(Math.random() * loserMessages.length)];
-          document.getElementById("failSound").play();
-          resultDiv.innerHTML = `<div class="hosky-doge">🙈</div><p>${msg}</p>`;
-        }
-
-        updateClaimsLeft();
-      } catch (e) {
-        resultDiv.innerHTML = "⚠️ Server error. Please try again later.";
+        resultDiv.innerHTML = `
+          <div class="hosky-doge">🐶</div>
+          <p>🎉 You WON some HOSKY!</p>
+          <input type='text' id='discordName' placeholder='Enter Discord username'><br>
+          <button onclick='alert("✅ Discord saved! (Offline)")'>Submit Discord</button>
+        `;
+      } else {
+        const messages = [
+          "😬 Nope. Try again?",
+          "🛌 Nothing here. Keep scratching.",
+          "💩 RUGGED. That’s how it goes.",
+          "🐕‍🧻 Hosky ate your claim ID. Sorry."
+        ];
+        const msg = messages[Math.floor(Math.random() * messages.length)];
+        document.getElementById("failSound").play();
+        resultDiv.innerHTML = `<div class="hosky-doge">🙈</div><p>${msg}</p>`;
       }
     }
-
-    async function submitDiscord(claimId) {
-      const discordName = document.getElementById("discordName").value.trim();
-      const resultDiv = document.getElementById("result");
-      if (!discordName) {
-        alert("Please enter your Discord username.");
-        return;
-      }
-
-      try {
-        const res = await fetch(API_DISCORD, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ claimId, discord: discordName })
-        });
-        const data = await res.json();
-        if (data.success) {
-          resultDiv.innerHTML += `<p>✅ Discord saved!</p>`;
-        } else {
-          resultDiv.innerHTML += `<p>⚠️ Error saving Discord.</p>`;
-        }
-      } catch (e) {
-        resultDiv.innerHTML += `<p>⚠️ Failed to connect to server.</p>`;
-      }
-    }
-
-    updateClaimsLeft();
   </script>
 
 </body>
