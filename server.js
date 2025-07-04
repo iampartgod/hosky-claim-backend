@@ -9,6 +9,17 @@ app.use(bodyParser.json());
 
 const db = new Database("./claims.db");
 
+// Temporary reset endpoint — REMOVE after use!
+app.post("/reset-codes", (req, res) => {
+  try {
+    db.prepare("UPDATE claim_codes SET used = 0").run();
+    res.json({ success: true, message: "All claim codes have been reset." });
+  } catch (error) {
+    console.error("Error resetting codes:", error);
+    res.status(500).json({ success: false, message: "Reset failed." });
+  }
+});
+
 // Create table if not exists
 db.prepare(`
   CREATE TABLE IF NOT EXISTS claim_codes (
