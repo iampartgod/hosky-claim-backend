@@ -161,11 +161,6 @@
           });
           document.getElementById("winSound").play();
 
-          const discordInput = `<input type='text' id='discordName' placeholder='Enter Discord username'>`;
-          const submitBtn = `<button onclick='submitDiscord("${id}")'>Submit Discord</button>`;
-
-          resultDiv.innerHTML = `<div class="hosky-doge">🐶</div><p>${data.message}</p>${discordInput}<br>${submitBtn}`;
-        } else {
           const loserMessages = [
             "😬 Nope. Try again?",
             "🛌 Nothing here. Keep scratching.",
@@ -182,14 +177,6 @@
         resultDiv.innerHTML = "⚠️ Server error. Please try again later.";
       }
     }
-
-    async function submitDiscord(claimId) {
-      const discordName = document.getElementById("discordName").value.trim();
-      const resultDiv = document.getElementById("result");
-      if (!discordName) {
-        alert("Please enter your Discord username.");
-        return;
-      }
 
       try {
         const res = await fetch(API_DISCORD, {
