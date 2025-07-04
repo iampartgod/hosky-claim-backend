@@ -10,25 +10,6 @@ app.use(express.json());
 
 const db = new Database('claims.db');
 
-app.post('/save-discord', express.json(), (req, res) => {
-  const { claimId, discordUsername } = req.body;
-
-  if (!claimId || !discordUsername) {
-    return res.status(400).json({ success: false, message: 'Missing claimId or discordUsername' });
-  }
-
-  // Here, save the discordUsername linked to claimId in your DB
-  // For example:
-  const stmt = db.prepare('UPDATE claim_codes SET discord_username = ? WHERE code = ?');
-  const info = stmt.run(discordUsername, claimId);
-
-  if (info.changes === 1) {
-    return res.json({ success: true, message: 'Discord username saved!' });
-  } else {
-    return res.status(404).json({ success: false, message: 'Claim ID not found' });
-  }
-});
-
 // Check if a claim code is valid and unused
 app.post('/check-claim', (req, res) => {
   const { claimId } = req.body;
