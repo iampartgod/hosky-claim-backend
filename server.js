@@ -54,7 +54,7 @@ app.post("/check-claim", (req, res) => {
 // New endpoint to get count of unused claims
 app.get("/claims-left", (req, res) => {
   try {
-    const row = db.prepare("SELECT COUNT(*) as count FROM claim_codes WHERE used = 0").get();
+    const row = db.prepare("SELECT COUNT(*) AS count FROM claim_codes WHERE used = 0").get();
     res.json({ success: true, count: row.count });
   } catch (error) {
     console.error(error);
