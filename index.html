@@ -119,16 +119,6 @@
     const API_COUNT = "https://hosky-claim-backend.onrender.com/claims-left";
     const API_DISCORD = "https://hosky-claim-backend.onrender.com/submit-discord";
 
-    async function updateClaimsLeft() {
-      try {
-        const res = await fetch(API_COUNT);
-        const data = await res.json();
-        document.getElementById("claims-left").textContent = `Claims left: ${data.remaining}`;
-      } catch (e) {
-        document.getElementById("claims-left").textContent = "Claims left: Error";
-      }
-    }
-
     async function checkClaim() {
       const id = document.getElementById("claimId").value.trim().toUpperCase();
       const resultDiv = document.getElementById("result");
