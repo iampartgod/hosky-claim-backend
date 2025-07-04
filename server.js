@@ -33,17 +33,6 @@ app.post('/submit-discord', (req, res) => {
   res.json({ success: true });
 });
 
-// ✅ GET claims-left route
-app.get('/claims-left', (req, res) => {
-  try {
-    const result = db.prepare("SELECT COUNT(*) as remaining FROM claim_codes WHERE used = 0").get();
-    res.json({ remaining: result.remaining });
-  } catch (err) {
-    console.error("Error in /claims-left:", err);
-    res.status(500).json({ error: "Database error" });
-  }
-});
-
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
