@@ -199,25 +199,6 @@
         resultDiv.innerHTML += `<p>⚠️ Failed to connect to server.</p>`;
       }
     }
-    
-    function saveDiscordUsername(claimId, discordUsername) {
-  fetch('https://hosky-claim-backend.onrender.com/save-discord', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ claimId, discordUsername })
-  })
-  .then(res => res.json())
-  .then(data => {
-    if (data.success) {
-      alert('Discord username saved! Thanks for claiming.');
-    } else {
-      alert('Error: ' + data.message);
-    }
-  })
-  .catch(() => {
-    alert('⚠️ Failed to connect to server.');
-  });
-}
 
     updateClaimsLeft();
   </script>
