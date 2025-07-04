@@ -30,11 +30,11 @@ app.post("/check-claim", (req, res) => {
     const row = db.prepare("SELECT * FROM claim_codes WHERE code = ?").get(code);
 
     if (!row) {
-      return res.json({ success: false, message: "Invalid Claim ID." });
+      return res.json({ success: false, message: "Invalid Scratcher ID Idjiot." });
     }
 
     if (row.used) {
-      return res.json({ success: false, message: "This Claim ID has already been used." });
+      return res.json({ success: false, message: "Sorry IDJIOT! This Claim ID has already been used." });
     }
 
     // Mark as used

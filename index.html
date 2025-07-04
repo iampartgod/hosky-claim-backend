@@ -89,7 +89,8 @@
       class="logo"
     />
     <h1>💩 HOSKY RARE EVO 2025 Scratchers Claim 💩</h1>
-    <p>Enter your <strong>Claim ID</strong> below:</p>
+    <p id="claims-left">Loading claims left...</p>
+    <p>Enter your <strong>Scratcher ID</strong> below:</p>
   </header>
 
   <div class="claim-box">
@@ -152,6 +153,29 @@
           resultDiv.innerHTML = "⚠️ Server error. Please try again later.";
         });
     }
+
+    const CLAIMS_LEFT_URL = "https://hosky-claim-backend.onrender.com/claims-left";
+
+async function updateClaimsLeft() {
+  try {
+    const res = await fetch(CLAIMS_LEFT_URL);
+    const data = await res.json();
+    if (data.success) {
+      document.getElementById("claims-left").textContent = `Claims left: ${data.count}`;
+    } else {
+      document.getElementById("claims-left").textContent = "Claims left: N/A";
+    }
+  } catch {
+    document.getElementById("claims-left").textContent = "Claims left: Error";
+  }
+}
+
+// Initial load
+updateClaimsLeft();
+
+// Refresh every 15 seconds
+setInterval(updateClaimsLeft, 15000);
+
   </script>
 </body>
 </html>
