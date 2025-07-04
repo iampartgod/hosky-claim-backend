@@ -18,6 +18,7 @@ db.prepare(`
   )
 `).run();
 
+// Endpoint to check a claim code
 app.post("/check-claim", (req, res) => {
   const { claimId } = req.body;
   if (!claimId || typeof claimId !== "string") {
@@ -30,11 +31,11 @@ app.post("/check-claim", (req, res) => {
     const row = db.prepare("SELECT * FROM claim_codes WHERE code = ?").get(code);
 
     if (!row) {
-      return res.json({ success: false, message: "Invalid Scratcher ID Idjiot." });
+      return res.json({ success: false, message: "Invalid Claim ID." });
     }
 
     if (row.used) {
-      return res.json({ success: false, message: "Sorry IDJIOT! This Claim ID has already been used." });
+      return res.json({ success: false, message: "This Claim ID has already been used." });
     }
 
     // Mark as used
@@ -47,6 +48,17 @@ app.post("/check-claim", (req, res) => {
   } catch (error) {
     console.error(error);
     return res.status(500).json({ success: false, message: "Server error." });
+  }
+});
+
+// New endpoint to get count of unused claims
+app.get("/claims-left", (req, res) => {
+  try {
+    const row = db.prepare("SELECT COUNT(*) as count FROM claim_codes WHERE used = 0").get();
+    res.json({ success: true, count: row.count });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ success: false, message: "Server error." });
   }
 });
 

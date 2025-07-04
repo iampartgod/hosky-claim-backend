@@ -30,6 +30,11 @@
       color: #ffffff;
       margin-bottom: 0.5rem;
     }
+    #claims-left {
+      font-size: 1rem;
+      margin-top: 0.25rem;
+      font-weight: bold;
+    }
     .claim-box {
       background: transparent;
       max-width: 500px;
@@ -89,7 +94,8 @@
       class="logo"
     />
     <h1>💩 HOSKY RARE EVO 2025 Scratchers Claim 💩</h1>
-    <p>Enter your <strong>Scratcher ID</strong> below:</p>
+    <p>Enter your <strong>Claim ID</strong> below:</p>
+    <p id="claims-left">Loading claims left...</p>
   </header>
 
   <div class="claim-box">
@@ -100,12 +106,12 @@
   </div>
 
   <footer>
-    &copy; 2025 Rare Evo | HOSKY Degeneracy Division | For degenerates, by degenerates. | Ran by @IAmPartGod | DM me on Discord for any questions 
-    @IAmPartGod#1173
+    &copy; 2025 Rare Evo | HOSKY Degeneracy Division | For degenerates, by degenerates. | Ran by @IAmPartGod | DM me on Discord for any question @IAmPartGod#1173
   </footer>
 
   <script>
     const API_URL = "https://hosky-claim-backend.onrender.com/check-claim";
+    const CLAIMS_LEFT_URL = "https://hosky-claim-backend.onrender.com/claims-left";
     let cooldown = false;
 
     function checkClaim() {
@@ -137,6 +143,7 @@
             });
             document.getElementById("winSound").play();
             resultDiv.innerHTML = `<div class="hosky-doge">🐶</div><p>${data.message}</p>`;
+            updateClaimsLeft(); // update count live after claim
           } else {
             document.getElementById("failSound").play();
             const loserMessages = [
@@ -153,6 +160,24 @@
           resultDiv.innerHTML = "⚠️ Server error. Please try again later.";
         });
     }
+
+    async function updateClaimsLeft() {
+      try {
+        const res = await fetch(CLAIMS_LEFT_URL);
+        const data = await res.json();
+        if (data.success) {
+          document.getElementById("claims-left").textContent = `Claims left: ${data.count}`;
+        } else {
+          document.getElementById("claims-left").textContent = "Claims left: N/A";
+        }
+      } catch {
+        document.getElementById("claims-left").textContent = "Claims left: Error";
+      }
+    }
+
+    // Initial load & auto-refresh every 15s
+    updateClaimsLeft();
+    setInterval(updateClaimsLeft, 15000);
   </script>
 </body>
 </html>
