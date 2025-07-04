@@ -119,12 +119,6 @@
     const API_CLAIM = "https://hosky-claim-backend.onrender.com/check-claim";
     const API_COUNT = "https://hosky-claim-backend.onrender.com/claims-left";
     const API_DISCORD = "https://hosky-claim-backend.onrender.com/submit-discord";
-    const API_URL = 'https://hosky-claim-backend.onrender.com';
-
-function updateClaimsLeft() {
-  fetch(`${API_URL}/claims-left`)
-  ...
-}
 
     async function updateClaimsLeft() {
       try {
@@ -205,18 +199,6 @@ function updateClaimsLeft() {
         resultDiv.innerHTML += `<p>⚠️ Failed to connect to server.</p>`;
       }
     }
-
-    function updateClaimsLeft() {
-  fetch('https://hosky-claim-backend.onrender.com/claims-left')
-    .then(res => res.json())
-    .then(data => {
-      document.getElementById('claims-left').textContent = `Claims left: ${data.claimsLeft}`;
-    })
-    .catch(() => {
-      document.getElementById('claims-left').textContent = 'Claims left: Error';
-    });
-}
-
 
     updateClaimsLeft();
   </script>
