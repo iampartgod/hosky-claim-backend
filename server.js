@@ -18,15 +18,6 @@ db.prepare(`
   )
 `).run();
 
-// Example seed data (run once, comment out after seeding)
-const seedData = [
-  { code: "DEEZNUTS", message: "🌰 Congrats! You won 6,900,420 HOSKY!" },
-  { code: "WEN10K", message: "🚀 10K soon? You just earned 4,200,000 HOSKY!" },
-  { code: "CERFCERF", message: "🐸 CERF vibes! You got 6,000,000 HOSKY!" },
-  { code: "HOSKY", message: "🐶 Big Doge Energy! You hit 5,000,000 HOSKY!" },
-  { code: "BUSYBUSY", message: "💼 Hustle pays. 5,000,000 HOSKY for you!" }
-];
-
 // Insert seed data if not present (comment this block out after first run)
 for (const item of seedData) {
   db.prepare("INSERT OR IGNORE INTO claim_codes (code, message) VALUES (?, ?)").run(item.code, item.message);
@@ -62,17 +53,6 @@ app.post("/check-claim", (req, res) => {
   } catch (error) {
     console.error(error);
     return res.status(500).json({ success: false, message: "Server error." });
-  }
-});
-
-// GET /claims-left endpoint
-app.get("/claims-left", (req, res) => {
-  try {
-    const row = db.prepare("SELECT COUNT(*) AS count FROM claim_codes WHERE used = 0").get();
-    res.json({ success: true, count: row.count });
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ success: false, message: "Server error." });
   }
 });
 
