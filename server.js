@@ -10,27 +10,29 @@ app.use(express.json());
 
 const db = new Database('claims.db');
 
-// Check if a claim code is valid and unused
-app.post('/check-claim', (req, res) => {
-  const { claimId } = req.body;
+// Submit Discord username (still used)
+app.post('/submit-discord', (req, res) => {
+  const { code, discord } = req.body;
 
-  const stmt = db.prepare("SELECT * FROM claim_codes WHERE code = ? AND used = 0");
-  const row = stmt.get(claimId.toUpperCase());
+  if (!code || !discord) {
+    return res.status(400).json({ success: false, message: "Missing code or Discord name." });
+  }
 
-  if (row) {
-    // Mark code as used
-    db.prepare("UPDATE claim_codes SET used = 1 WHERE code = ?").run(claimId.toUpperCase());
-    res.json({ success: true, message: row.message });
-  } else {
-    res.json({ success: false, message: "Invalid or already used Claim ID." });
+  try {
+    const result = db.prepare("UPDATE claim_codes SET discord = ? WHERE code = ?").run(discord, code.toUpperCase());
+    if (result.changes === 0) {
+      return res.status(404).json({ success: false, message: "Claim ID not found." });
+    }
+    res.json({ success: true });
+  } catch (err) {
+    console.error("DB error:", err);
+    res.status(500).json({ success: false, message: "Server error." });
   }
 });
 
-// Submit Discord username
-app.post('/submit-discord', (req, res) => {
-  const { code, discord } = req.body;
-  db.prepare("UPDATE claim_codes SET discord = ? WHERE code = ?").run(discord, code.toUpperCase());
-  res.json({ success: true });
+// Optional: health check
+app.get('/', (req, res) => {
+  res.send('HOSKY Claim Backend is running');
 });
 
 app.listen(PORT, () => {
