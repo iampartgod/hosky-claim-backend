@@ -1,6 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 const Database = require('better-sqlite3');
+const basicAuth = require('express-basic-auth');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -10,14 +11,22 @@ app.use(express.json());
 
 const db = new Database('claims.db');
 
-// Submit Discord username (still used)
+// Admin credentials (choose your own secure username/password)
+const adminUser = 'admin';
+const adminPass = 'yourStrongPassword';
+
+// Basic Auth middleware for /admin routes
+app.use('/admin', basicAuth({
+  users: { [adminUser]: adminPass },
+  challenge: true,
+}));
+
+// Endpoint to submit Discord username (no change)
 app.post('/submit-discord', (req, res) => {
   const { code, discord } = req.body;
-
   if (!code || !discord) {
     return res.status(400).json({ success: false, message: "Missing code or Discord name." });
   }
-
   try {
     const result = db.prepare("UPDATE claim_codes SET discord = ? WHERE code = ?").run(discord, code.toUpperCase());
     if (result.changes === 0) {
@@ -30,9 +39,24 @@ app.post('/submit-discord', (req, res) => {
   }
 });
 
-// Optional: health check
-app.get('/', (req, res) => {
-  res.send('HOSKY Claim Backend is running');
+// Admin dashboard to view codes + Discord usernames
+app.get('/admin/dashboard', (req, res) => {
+  try {
+    const rows = db.prepare('SELECT code, discord FROM claim_codes WHERE discord IS NOT NULL').all();
+    let html = `
+      <h1>HOSKY Claim Discord Dashboard</h1>
+      <table border="1" cellpadding="5" cellspacing="0">
+        <tr><th>Claim Code</th><th>Discord Username</th></tr>
+    `;
+
+    for (const row of rows) {
+      html += `<tr><td>${row.code}</td><td>${row.discord}</td></tr>`;
+    }
+    html += '</table>';
+    res.send(html);
+  } catch (err) {
+    res.status(500).send('Server error loading dashboard.');
+  }
 });
 
 app.listen(PORT, () => {
