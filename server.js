@@ -1,47 +1,56 @@
-const express = require("express");
-const cors = require("cors");
-require("dotenv").config({ path: "./env.env" }); // Use env.env instead of .env
+const express = require('express');
+const cors = require('cors');
+const fs = require('fs');
+require('dotenv').config();
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 10000;
 
 app.use(cors());
 app.use(express.json());
 
-// Load claim codes from env
 let claimCodes = {};
+
 try {
-  claimCodes = JSON.parse(process.env.CLAIM_CODES);
+  if (process.env.CLAIM_CODES) {
+    claimCodes = JSON.parse(process.env.CLAIM_CODES);
+    console.log('✅ CLAIM_CODES loaded successfully');
+  } else {
+    console.warn('⚠️ CLAIM_CODES environment variable is missing.');
+  }
 } catch (err) {
-  console.error("❌ Failed to parse CLAIM_CODES from env.env:", err);
+  console.error('❌ Failed to parse CLAIM_CODES from env:', err);
 }
 
-// Endpoint to check claim ID
-app.post("/check-claim", (req, res) => {
-  const { claimId } = req.body;
-  if (!claimId) {
-    return res.status(400).json({ success: false, message: "Missing claimId." });
+const claimsLogFile = 'claims.log';
+
+function logClaim(code, discord) {
+  const timestamp = new Date().toISOString();
+  const logEntry = `${timestamp} - CODE: ${code} - DISCORD: ${discord || 'N/A'}\n`;
+  fs.appendFile(claimsLogFile, logEntry, (err) => {
+    if (err) {
+      console.error('Failed to log claim:', err);
+    }
+  });
+}
+
+app.post('/claim', async (req, res) => {
+  const { code, discord } = req.body;
+
+  if (!code || typeof code !== 'string') {
+    return res.status(400).send('Claim ID not recognized.');
   }
 
-  const code = claimId.toUpperCase();
+  const normalizedCode = code.trim().toUpperCase();
+  const rewardMessage = claimCodes[normalizedCode];
 
-  if (claimCodes[code]) {
-    return res.json({ success: true, message: claimCodes[code] });
-  } else {
-    return res.json({ success: false, message: "Claim ID not recognized." });
-  }
-});
-
-// Endpoint to mock save Discord username
-app.post("/submit-discord", (req, res) => {
-  const { claimId, discord } = req.body;
-
-  if (!claimId || !discord) {
-    return res.status(400).json({ success: false, message: "Missing claimId or discord username." });
+  if (!rewardMessage) {
+    return res.status(404).send('Claim ID not recognized.');
   }
 
-  console.log(`✅ Discord username "${discord}" submitted for claim ID "${claimId}"`);
-  return res.json({ success: true, message: "Discord username saved (mocked)." });
+  logClaim(normalizedCode, discord);
+
+  res.send(rewardMessage);
 });
 
 app.listen(PORT, () => {
