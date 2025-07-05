@@ -1,9 +1,9 @@
-import express from 'express';
-import cors from 'cors';
-import Database from 'better-sqlite3';
-import dotenv from 'dotenv';
-
-dotenv.config();
+const express = require("express");
+const cors = require("cors");
+const sqlite3 = require("sqlite3").verbose();
+const fs = require("fs");
+const { google } = require("googleapis");
+require("dotenv").config();
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -11,53 +11,47 @@ const PORT = process.env.PORT || 3000;
 app.use(cors());
 app.use(express.json());
 
-const db = new Database('./claims.db', { verbose: console.log });
+const db = new sqlite3.Database("./claims.db");
 
-// Check a claim code
-app.post('/check-claim', (req, res) => {
-  try {
-    const { claimId } = req.body;
-    if (!claimId) return res.status(400).json({ success: false, message: 'No claimId provided' });
-
-    const stmt = db.prepare('SELECT used, message FROM claim_codes WHERE code = ?');
-    const row = stmt.get(claimId);
-
-    if (!row) {
-      return res.json({ success: false, message: 'Invalid claim code' });
-    }
-
-    if (row.used) {
-      return res.json({ success: false, message: 'Claim code already used' });
-    }
-
-    // Mark as used
-    const update = db.prepare('UPDATE claim_codes SET used = 1 WHERE code = ?');
-    update.run(claimId);
-
-    return res.json({ success: true, message: row.message });
-  } catch (err) {
-    console.error(err);
-    return res.status(500).json({ success: false, message: 'Internal server error' });
-  }
+// Load Google Sheets credentials
+const auth = new google.auth.GoogleAuth({
+  keyFile: "credentials.json", // path to your downloaded JSON key
+  scopes: ["https://www.googleapis.com/auth/spreadsheets"],
 });
 
-// Save Discord username for a claim
-app.post('/submit-discord', (req, res) => {
+const SPREADSHEET_ID = "YOUR_SPREADSHEET_ID_HERE"; // replace this
+const SHEET_NAME = "Winners"; // name of the sheet/tab (e.g., "Winners")
+
+async function appendToSheet(claimId, discordUsername) {
+  const client = await auth.getClient();
+  const sheets = google.sheets({ version: "v4", auth: client });
+
+  await sheets.spreadsheets.values.append({
+    spreadsheetId: SPREADSHEET_ID,
+    range: `${SHEET_NAME}!A:B`,
+    valueInputOption: "USER_ENTERED",
+    requestBody: {
+      values: [[claimId, discordUsername]],
+    },
+  });
+}
+
+// Endpoint to receive Discord username
+app.post("/submit-discord", async (req, res) => {
+  const { claimId, discord } = req.body;
+  if (!claimId || !discord) {
+    return res.status(400).json({ success: false, message: "Missing data" });
+  }
+
   try {
-    const { claimId, discord } = req.body;
-    if (!claimId || !discord) return res.status(400).json({ success: false, message: 'Missing claimId or discord' });
-
-    // Save discord username linked to claimId, ignoring duplicates (optional: implement logic to update if needed)
-    const insert = db.prepare('INSERT INTO discord_submissions (claim_code, discord_username) VALUES (?, ?)');
-    insert.run(claimId, discord);
-
-    return res.json({ success: true, message: 'Discord username saved' });
+    await appendToSheet(claimId, discord);
+    res.json({ success: true, message: "Saved to Google Sheet" });
   } catch (err) {
-    console.error(err);
-    return res.status(500).json({ success: false, message: 'Internal server error' });
+    console.error("Google Sheets Error:", err);
+    res.status(500).json({ success: false, message: "Failed to log to sheet" });
   }
 });
 
 app.listen(PORT, () => {
-  console.log(`Server listening on port ${PORT}`);
+  console.log(`✅ Server running on port ${PORT}`);
 });
