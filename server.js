@@ -7,6 +7,8 @@ const dotenv = require('dotenv');
 
 // Load environment variables from env.env (or .env if you rename it)
 dotenv.config({ path: './env.env' });
+require('dotenv').config();
+console.log('🔍 Raw CLAIM_CODES env var:', process.env.CLAIM_CODES && process.env.CLAIM_CODES.slice(0,100) + '…');
 
 const app = express();
 app.use(cors());
