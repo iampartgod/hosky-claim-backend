@@ -123,37 +123,50 @@
       }
 
       try {
-        const res = await fetch(API_CLAIM, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ code, discord })
-        });
+  const res = await fetch(API_CLAIM, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ code, discord })
+  });
 
-        const data = await res.json();
-
-        if (data.success) {
-          confetti({ particleCount: 150, spread: 100, origin: { y: 0.6 } });
-          document.getElementById("winSound").play();
-
-          resultDiv.innerHTML = `
-            <div class="hosky-doge">🐶</div>
-            <p>${data.message[0]}</p>
-            <p>Claim successful for code <strong>${code}</strong> and Discord <strong>${discord}</strong>.</p>
-          `;
-
-          // Optionally disable inputs and button to prevent multiple claims
-          document.getElementById("claimId").disabled = true;
-          document.getElementById("discordName").disabled = true;
-          event.target.disabled = true;
-
-        } else {
-          document.getElementById("failSound").play();
-          resultDiv.innerHTML = `<div class="hosky-doge">🙈</div><p>${data.message}</p>`;
-        }
-      } catch (e) {
-        resultDiv.innerHTML = "⚠️ Server error. Please try again later.";
-      }
+  if (!res.ok) {
+    // If server returns HTTP error code, try to read error message from JSON or fallback
+    let errorData = {};
+    try {
+      errorData = await res.json();
+    } catch {
+      // Ignore JSON parse errors here
     }
+    const errorMsg = errorData.message || 'Server returned an error.';
+    document.getElementById("failSound").play();
+    resultDiv.innerHTML = `<div class="hosky-doge">🙈</div><p>${errorMsg}</p>`;
+    return;
+  }
+
+  const data = await res.json();
+
+  if (data.success) {
+    confetti({ particleCount: 150, spread: 100, origin: { y: 0.6 } });
+    document.getElementById("winSound").play();
+
+    resultDiv.innerHTML = `
+      <div class="hosky-doge">🐶</div>
+      <p>${data.message[0]}</p>
+      <p>Claim successful for code <strong>${code}</strong> and Discord <strong>${discord}</strong>.</p>
+    `;
+
+    // Disable inputs and button
+    event.target.disabled = true;
+    document.getElementById("claimId").disabled = true;
+    document.getElementById("discordName").disabled = true;
+
+  } else {
+    document.getElementById("failSound").play();
+    resultDiv.innerHTML = `<div class="hosky-doge">🙈</div><p>${data.message}</p>`;
+  }
+} catch (e) {
+  resultDiv.innerHTML = "⚠️ Server error. Please try again later.";
+}
   </script>
 
 </body>
