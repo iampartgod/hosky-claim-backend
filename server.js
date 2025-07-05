@@ -19,16 +19,16 @@ const auth = new google.auth.GoogleAuth({
   scopes: ["https://www.googleapis.com/auth/spreadsheets"],
 });
 
-const SPREADSHEET_ID = process.env.SPREADSHEET_ID;
-const SHEET_NAME = "Winners"; // name of the sheet/tab (e.g., "Winners")
+const SPREADSHEET_ID = process.env.SPREADSHEET_ID;  // Make sure this is set in your env variables
+const SHEET_NAME = "Winners"; // name of the sheet/tab in your Google Sheet
 
 async function appendToSheet(claimId, discordUsername) {
   const client = await auth.getClient();
   const sheets = google.sheets({ version: "v4", auth: client });
 
   await sheets.spreadsheets.values.append({
-    spreadsheetId: 1LDf06w9j8mw3Np6tOmjeust3ywRhcOSlabmJ-mGZSUE,
-    range: `${HOSKY Winners}!A:B`,
+    spreadsheetId: SPREADSHEET_ID,
+    range: `${SHEET_NAME}!A:B`,
     valueInputOption: "USER_ENTERED",
     requestBody: {
       values: [[claimId, discordUsername]],
@@ -36,7 +36,7 @@ async function appendToSheet(claimId, discordUsername) {
   });
 }
 
-// Endpoint to receive Discord username
+// Endpoint to receive Discord username and save to Google Sheet
 app.post("/submit-discord", async (req, res) => {
   const { claimId, discord } = req.body;
   if (!claimId || !discord) {
