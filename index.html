@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <title>HOSKY RARE EVO 2025 Scratchers Claim</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet" />
   <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
   <style>
     body {
@@ -17,30 +17,25 @@
       color: #ffffff;
       text-align: center;
     }
-
     header {
       padding: 2rem 1rem 1rem;
     }
-
     .logo {
       width: 100px;
       height: auto;
       margin-bottom: 1rem;
     }
-
     h1 {
       font-size: 1.25rem;
       color: #ffffff;
       margin-bottom: 0.5rem;
     }
-
     .claim-box {
       background: transparent;
       max-width: 500px;
       margin: 2rem auto;
       padding: 2rem 1rem;
     }
-
     input[type="text"] {
       width: 90%;
       padding: 1rem;
@@ -52,7 +47,6 @@
       color: #ffffff;
       box-shadow: 0 0 10px #00aaff80 inset;
     }
-
     button {
       padding: 1rem 2rem;
       font-size: 1rem;
@@ -64,22 +58,18 @@
       transition: background 0.3s ease;
       box-shadow: 0 0 10px #00aaff99;
     }
-
     button:hover {
       background-color: #008ecc;
     }
-
     #result {
       margin-top: 2rem;
       font-size: 1rem;
       color: #ffffff;
     }
-
     .hosky-doge {
       font-size: 3rem;
       margin-top: 1rem;
     }
-
     footer {
       margin-top: 4rem;
       font-size: 0.75rem;
@@ -100,7 +90,7 @@
 
   <div class="claim-box">
     <input type="text" id="claimId" placeholder="Enter Claim ID" />
-    <br>
+    <br />
     <button onclick="checkClaim()">CLAIM</button>
     <div id="result"></div>
   </div>
@@ -136,10 +126,15 @@
           confetti({ particleCount: 150, spread: 100, origin: { y: 0.6 } });
           document.getElementById("winSound").play();
 
-          const discordInput = `<input type='text' id='discordName' placeholder='Enter Discord username'>`;
-          const submitBtn = `<button onclick='submitDiscord("${id}")'>Submit Discord</button>`;
+          const discordInput = `<input type="text" id="discordName" placeholder="Enter Discord username" />`;
+          const submitBtn = `<button onclick="submitDiscord('${id}')">Submit Discord</button>`;
 
-          resultDiv.innerHTML = `<div class="hosky-doge">🐶</div><p>${data.message}</p>${discordInput}<br>${submitBtn}`;
+          resultDiv.innerHTML = `
+            <div class="hosky-doge">🐶</div>
+            <p>${data.message}</p>
+            ${discordInput}<br />
+            ${submitBtn}
+          `;
         } else {
           const loserMessages = [
             "😬 Nope. Try again?",
@@ -159,6 +154,7 @@
     async function submitDiscord(claimId) {
       const discordName = document.getElementById("discordName").value.trim();
       const resultDiv = document.getElementById("result");
+
       if (!discordName) {
         alert("Please enter your Discord username.");
         return;
@@ -171,6 +167,7 @@
           body: JSON.stringify({ claimId, discord: discordName })
         });
         const data = await res.json();
+
         if (data.success) {
           resultDiv.innerHTML += `<p>✅ Discord saved!</p>`;
         } else {
