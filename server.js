@@ -4,8 +4,8 @@ const express = require('express');
 const cors = require('cors');
 const bodyParser = require('body-parser');
 
-// Load env variables
-require('dotenv').config({ path: './env.env' });
+// Load env variables from custom file
+require('dotenv').config({ path: './codes.env' });
 console.log('🔍 Raw CLAIM_CODES env var:', process.env.CLAIM_CODES && process.env.CLAIM_CODES.slice(0, 100) + '…');
 
 const app = express();
