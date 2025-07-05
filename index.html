@@ -2,123 +2,179 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>🐶 HOSKY Claim Portal</title>
+  <title>HOSKY RARE EVO 2025 Scratchers Claim</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
   <style>
     body {
-      background-color: #0d0d0d;
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      color: #fff;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      min-height: 100vh;
       margin: 0;
-      padding: 0 20px;
-    }
-
-    h1 {
-      color: #ffd700;
-      font-size: 2em;
-      margin-bottom: 20px;
+      padding: 0;
+      font-family: 'Press Start 2P', monospace;
+      background-color: #3a7ff7;
+      background-image: url('https://hosky.io/_next/image?url=%2Fgrid.png&w=1920&q=75');
+      background-size: cover;
+      color: #ffffff;
       text-align: center;
     }
-
-    input, button {
-      padding: 12px;
-      font-size: 16px;
-      margin: 10px 0;
-      width: 100%;
-      max-width: 320px;
+    header {
+      padding: 2rem 1rem 1rem;
+    }
+    .logo {
+      width: 100px;
+      height: auto;
+      margin-bottom: 1rem;
+    }
+    h1 {
+      font-size: 1.25rem;
+      color: #ffffff;
+      margin-bottom: 0.5rem;
+    }
+    .claim-box {
+      background: transparent;
+      max-width: 500px;
+      margin: 2rem auto;
+      padding: 2rem 1rem;
+    }
+    input[type="text"] {
+      width: 90%;
+      padding: 1rem;
+      margin-bottom: 1rem;
       border: none;
       border-radius: 8px;
+      font-size: 1rem;
+      background: #111;
+      color: #ffffff;
+      box-shadow: 0 0 10px #00aaff80 inset;
     }
-
-    input {
-      background-color: #1e1e1e;
-      color: #fff;
-    }
-
     button {
+      padding: 1rem 2rem;
+      font-size: 1rem;
       background-color: #00aaff;
-      color: #fff;
+      color: #000;
+      border: none;
+      border-radius: 10px;
       cursor: pointer;
-      transition: background-color 0.2s;
+      transition: background 0.3s ease;
+      box-shadow: 0 0 10px #00aaff99;
     }
-
     button:hover {
-      background-color: #008fcc;
+      background-color: #008ecc;
     }
-
-    #result, #error {
-      margin-top: 20px;
-      font-size: 1em;
-      max-width: 400px;
-      text-align: center;
-    }
-
     #result {
-      color: #00ff99;
+      margin-top: 2rem;
+      font-size: 1rem;
+      color: #ffffff;
     }
-
-    #error {
-      color: #ff5555;
+    .hosky-doge {
+      font-size: 3rem;
+      margin-top: 1rem;
     }
-
-    .container {
-      width: 100%;
-      max-width: 400px;
+    footer {
+      margin-top: 4rem;
+      font-size: 0.75rem;
+      color: #ffffff;
     }
   </style>
 </head>
 <body>
 
-  <h1>🐶 HOSKY Claim Portal</h1>
+  <audio id="winSound" src="https://www.myinstants.com/media/sounds/mlg-airhorn.mp3"></audio>
+  <audio id="failSound" src="https://www.myinstants.com/media/sounds/wrong-answer-sound-effect.mp3"></audio>
 
-  <div class="container">
-    <input type="text" id="code" placeholder="Enter Claim Code" />
-    <input type="text" id="discord" placeholder="Enter Discord Handle" />
-    <button onclick="submitClaim()">Claim HOSKY</button>
+  <header>
+    <img src="https://hosky.io/_next/image?url=%2F_next%2Fstatic%2Fmedia%2FHosky_1200.9361cc3f.png&w=3840&q=75&dpl=dpl_FTXvPeFoVfhnZcx51YBD7T4mNDJf" alt="HOSKY Logo" class="logo" />
+    <h1>💩 HOSKY RARE EVO 2025 Scratchers Claim 💩</h1>
+    <p>Enter your <strong>Claim ID</strong> below:</p>
+  </header>
 
+  <div class="claim-box">
+    <input type="text" id="claimId" placeholder="Enter Claim ID" />
+    <br />
+    <button onclick="checkClaim()">CLAIM</button>
     <div id="result"></div>
-    <div id="error"></div>
   </div>
 
+  <footer>
+    &copy; 2025 Rare Evo | HOSKY Degeneracy Division | For degenerates, by degenerates. | Ran by @IAmPartGod | DM me on Discord for any question @IAmPartGod#1173
+  </footer>
+
   <script>
-    async function submitClaim() {
-      const code = document.getElementById("code").value.trim();
-      const discord = document.getElementById("discord").value.trim();
+    const API_CLAIM = "https://hosky-claim-backend.onrender.com/check-claim";
+    const API_DISCORD = "https://hosky-claim-backend.onrender.com/submit-discord";
+
+    async function checkClaim() {
+      const id = document.getElementById("claimId").value.trim().toUpperCase();
       const resultDiv = document.getElementById("result");
-      const errorDiv = document.getElementById("error");
 
-      resultDiv.textContent = "";
-      errorDiv.textContent = "";
-
-      if (!code || !discord) {
-        errorDiv.textContent = "❗ Please enter both a code and your Discord handle.";
+      if (!id || id.length < 4) {
+        resultDiv.innerHTML = "⚠️ Invalid Claim ID.";
+        document.getElementById("failSound").play();
         return;
       }
 
       try {
-        const res = await fetch("https://hosky-claim-backend.onrender.com/claim", {
+        const res = await fetch(API_CLAIM, {
           method: "POST",
-          headers: {
-            "Content-Type": "application/json"
-          },
-          body: JSON.stringify({ code, discord })
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ claimId: id })
         });
 
         const data = await res.json();
 
-        if (res.ok) {
-          resultDiv.textContent = data.message;
+        if (data.success) {
+          confetti({ particleCount: 150, spread: 100, origin: { y: 0.6 } });
+          document.getElementById("winSound").play();
+
+          const discordInput = `<input type="text" id="discordName" placeholder="Enter Discord username" />`;
+          const submitBtn = `<button onclick="submitDiscord('${id}')">Submit Discord</button>`;
+
+          resultDiv.innerHTML = `
+            <div class="hosky-doge">🐶</div>
+            <p>${data.message}</p>
+            ${discordInput}<br />
+            ${submitBtn}
+          `;
         } else {
-          errorDiv.textContent = data.error || "Something went wrong.";
+          const loserMessages = [
+            "😬 Nope. Try again?",
+            "🛌 Nothing here. Keep scratching.",
+            "💩 RUGGED. That’s how it goes.",
+            "🐕‍🧻 Hosky ate your claim ID. Sorry."
+          ];
+          const msg = data.message || loserMessages[Math.floor(Math.random() * loserMessages.length)];
+          document.getElementById("failSound").play();
+          resultDiv.innerHTML = `<div class="hosky-doge">🙈</div><p>${msg}</p>`;
         }
-      } catch (err) {
-        console.error("Error:", err);
-        errorDiv.textContent = "⚠️ Error connecting to the server.";
+      } catch (e) {
+        resultDiv.innerHTML = "⚠️ Server error. Please try again later.";
+      }
+    }
+
+    async function submitDiscord(claimId) {
+      const discordName = document.getElementById("discordName").value.trim();
+      const resultDiv = document.getElementById("result");
+
+      if (!discordName) {
+        alert("Please enter your Discord username.");
+        return;
+      }
+
+      try {
+        const res = await fetch(API_DISCORD, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ claimId, discord: discordName })
+        });
+        const data = await res.json();
+
+        if (data.success) {
+          resultDiv.innerHTML += `<p>✅ Discord saved!</p>`;
+        } else {
+          resultDiv.innerHTML += `<p>⚠️ Error saving Discord.</p>`;
+        }
+      } catch (e) {
+        resultDiv.innerHTML += `<p>⚠️ Failed to connect to server.</p>`;
       }
     }
   </script>
