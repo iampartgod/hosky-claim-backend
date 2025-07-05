@@ -11,3 +11,4 @@ credentials.jsonnode_modules/
 credentials.json
 .DS_Store
 codes.json
+env.env
