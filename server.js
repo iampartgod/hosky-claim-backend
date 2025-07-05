@@ -19,7 +19,7 @@ const auth = new google.auth.GoogleAuth({
   scopes: ["https://www.googleapis.com/auth/spreadsheets"],
 });
 
-const SPREADSHEET_ID = process.env.1LDf06w9j8mw3Np6tOmjeust3ywRhcOSlabmJ-mGZSUE;
+const SPREADSHEET_ID = process.env.SPREADSHEET_ID;
 const SHEET_NAME = "Winners"; // name of the sheet/tab (e.g., "Winners")
 
 async function appendToSheet(claimId, discordUsername) {
