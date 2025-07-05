@@ -85,13 +85,14 @@
   <header>
     <img src="https://hosky.io/_next/image?url=%2F_next%2Fstatic%2Fmedia%2FHosky_1200.9361cc3f.png&w=3840&q=75&dpl=dpl_FTXvPeFoVfhnZcx51YBD7T4mNDJf" alt="HOSKY Logo" class="logo" />
     <h1>💩 HOSKY RARE EVO 2025 Scratchers Claim 💩</h1>
-    <p>Enter your <strong>Claim ID</strong> below:</p>
+    <p>Enter your <strong>Claim ID</strong> and <strong>Discord username</strong> below:</p>
   </header>
 
   <div class="claim-box">
     <input type="text" id="claimId" placeholder="Enter Claim ID" />
+    <input type="text" id="discordName" placeholder="Enter Discord username (e.g. User#1234)" />
     <br />
-    <button onclick="checkClaim()">CLAIM</button>
+    <button onclick="claimCode()">CLAIM</button>
     <div id="result"></div>
   </div>
 
@@ -100,15 +101,23 @@
   </footer>
 
   <script>
-    const API_CLAIM = "https://hosky-claim-backend.onrender.com/check-claim";
-    const API_DISCORD = "https://hosky-claim-backend.onrender.com/submit-discord";
+    const API_CLAIM = "https://hosky-claim-backend.onrender.com/claim";
 
-    async function checkClaim() {
-      const id = document.getElementById("claimId").value.trim().toUpperCase();
+    async function claimCode() {
+      const code = document.getElementById("claimId").value.trim().toUpperCase();
+      const discord = document.getElementById("discordName").value.trim();
       const resultDiv = document.getElementById("result");
 
-      if (!id || id.length < 4) {
-        resultDiv.innerHTML = "⚠️ Invalid Claim ID.";
+      resultDiv.innerHTML = ''; // Clear previous messages
+
+      if (!code || code.length < 4) {
+        resultDiv.innerHTML = "⚠️ Please enter a valid Claim ID.";
+        document.getElementById("failSound").play();
+        return;
+      }
+
+      if (!discord) {
+        resultDiv.innerHTML = "⚠️ Please enter your Discord username.";
         document.getElementById("failSound").play();
         return;
       }
@@ -117,7 +126,7 @@
         const res = await fetch(API_CLAIM, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ claimId: id })
+          body: JSON.stringify({ code, discord })
         });
 
         const data = await res.json();
@@ -126,55 +135,23 @@
           confetti({ particleCount: 150, spread: 100, origin: { y: 0.6 } });
           document.getElementById("winSound").play();
 
-          const discordInput = `<input type="text" id="discordName" placeholder="Enter Discord username" />`;
-          const submitBtn = `<button onclick="submitDiscord('${id}')">Submit Discord</button>`;
-
           resultDiv.innerHTML = `
             <div class="hosky-doge">🐶</div>
-            <p>${data.message}</p>
-            ${discordInput}<br />
-            ${submitBtn}
+            <p>${data.message[0]}</p>
+            <p>Claim successful for code <strong>${code}</strong> and Discord <strong>${discord}</strong>.</p>
           `;
+
+          // Optionally disable inputs and button to prevent multiple claims
+          document.getElementById("claimId").disabled = true;
+          document.getElementById("discordName").disabled = true;
+          event.target.disabled = true;
+
         } else {
-          const loserMessages = [
-            "😬 Nope. Try again?",
-            "🛌 Nothing here. Keep scratching.",
-            "💩 RUGGED. That’s how it goes.",
-            "🐕‍🧻 Hosky ate your claim ID. Sorry."
-          ];
-          const msg = data.message || loserMessages[Math.floor(Math.random() * loserMessages.length)];
           document.getElementById("failSound").play();
-          resultDiv.innerHTML = `<div class="hosky-doge">🙈</div><p>${msg}</p>`;
+          resultDiv.innerHTML = `<div class="hosky-doge">🙈</div><p>${data.message}</p>`;
         }
       } catch (e) {
         resultDiv.innerHTML = "⚠️ Server error. Please try again later.";
-      }
-    }
-
-    async function submitDiscord(claimId) {
-      const discordName = document.getElementById("discordName").value.trim();
-      const resultDiv = document.getElementById("result");
-
-      if (!discordName) {
-        alert("Please enter your Discord username.");
-        return;
-      }
-
-      try {
-        const res = await fetch(API_DISCORD, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ claimId, discord: discordName })
-        });
-        const data = await res.json();
-
-        if (data.success) {
-          resultDiv.innerHTML += `<p>✅ Discord saved!</p>`;
-        } else {
-          resultDiv.innerHTML += `<p>⚠️ Error saving Discord.</p>`;
-        }
-      } catch (e) {
-        resultDiv.innerHTML += `<p>⚠️ Failed to connect to server.</p>`;
       }
     }
   </script>
