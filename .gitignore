@@ -12,3 +12,4 @@ credentials.json
 .DS_Store
 codes.json
 env.env
+env.env.json
