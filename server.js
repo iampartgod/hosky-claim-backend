@@ -23,7 +23,7 @@ const SPREADSHEET_ID = process.env.SPREADSHEET_ID; // your Google Sheet ID here
 const SHEET_NAME = "Winners"; // tab name in your sheet
 
 // Load claim codes and winnings from external JSON (not committed)
-const codes = require("/codes.json");
+const codes = require("./codes.json");
 
 // Function to append claim info to Google Sheet
 async function appendToSheet(claimId, discordUsername) {
