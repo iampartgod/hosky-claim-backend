@@ -3,7 +3,7 @@ const cors = require('cors');
 const bodyParser = require('body-parser');
 const dotenv = require('dotenv');
 
-dotenv.config({ path: './env.env' }); // Use your custom env filename
+dotenv.config({ path: './env.env.js' }); // Use your custom env filename
 
 const app = express();
 app.use(cors());
