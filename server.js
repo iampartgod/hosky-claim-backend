@@ -36,22 +36,29 @@ const usedCodes = new Set();
 // Claim endpoint
 app.post('/claim', (req, res) => {
   const { code, discord } = req.body;
+  console.log('Received claim request:', req.body);
+
   if (!code || !discord) {
+    console.log('Missing code or discord');
     return res.status(400).json({ success: false, message: 'Please provide both code and Discord handle.' });
   }
 
   const normalized = code.trim().toUpperCase();
+  console.log('Normalized code:', normalized);
+
   if (usedCodes.has(normalized)) {
+    console.log('Code already claimed:', normalized);
     return res.status(400).json({ success: false, message: 'This code has already been claimed.' });
   }
 
   const reward = claimCodes[normalized];
   if (!reward) {
+    console.log('Code not found:', normalized);
     return res.status(404).json({ success: false, message: 'Claim ID not recognized.' });
   }
 
   usedCodes.add(normalized);
-  console.log(`✅ Code ${normalized} claimed by ${discord}`);
+  console.log(`Code ${normalized} claimed by ${discord}`);
 
   return res.json({ success: true, message: reward });
 });
