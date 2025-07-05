@@ -12,5 +12,19 @@
     "express-basic-auth": "^1.2.1",
     "googleapis": "^150.0.1",
     "sqlite3": "^5.1.7"
-  }
+  },
+  "description": "",
+  "devDependencies": {},
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/iampartgod/hosky-claim-backend.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/iampartgod/hosky-claim-backend/issues"
+  },
+  "homepage": "https://github.com/iampartgod/hosky-claim-backend#readme"
 }
