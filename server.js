@@ -1,8 +1,8 @@
 const express = require("express");
 const cors = require("cors");
 const sqlite3 = require("sqlite3").verbose();
-const fs = require("fs");
-const { google } = require("googleapis");
+const fs = require("fs").promises;
+const path = require("path");
 require("dotenv").config();
 
 const app = express();
@@ -13,80 +13,80 @@ app.use(express.json());
 
 const db = new sqlite3.Database("./claims.db");
 
-// Load Google Sheets credentials and auth
-const auth = new google.auth.GoogleAuth({
-  keyFile: "credentials.json", // your downloaded JSON key, do NOT commit
-  scopes: ["https://www.googleapis.com/auth/spreadsheets"],
-});
-
-const SPREADSHEET_ID = process.env.SPREADSHEET_ID; // your Google Sheet ID here
-const SHEET_NAME = "Winners"; // tab name in your sheet
-
-// Load claim codes and winnings from external JSON (not committed)
-const codes = require("./codes.json");
-
-// Function to append claim info to Google Sheet
-async function appendToSheet(claimId, discordUsername) {
-  const client = await auth.getClient();
-  const sheets = google.sheets({ version: "v4", auth: client });
-
-  await sheets.spreadsheets.values.append({
-    spreadsheetId: SPREADSHEET_ID,
-    range: `${SHEET_NAME}!A:B`,
-    valueInputOption: "USER_ENTERED",
-    requestBody: {
-      values: [[claimId, discordUsername]],
-    },
-  });
+// Load codes and winnings from external file for secrecy
+const codesFile = path.join(__dirname, "codes.json");
+let codes = {};
+async function loadCodes() {
+  try {
+    const data = await fs.readFile(codesFile, "utf8");
+    codes = JSON.parse(data);
+    console.log("✅ Codes loaded successfully");
+  } catch (err) {
+    console.error("❌ Failed to load codes.json:", err);
+    process.exit(1); // Stop server if codes are missing
+  }
 }
 
-// Endpoint to check claim validity and status
+// Local file for saving Discord submissions
+const submissionsFile = path.join(__dirname, "submissions.json");
+
+// Helper to get code info
+function getCodeInfo(code) {
+  const upperCode = code.toUpperCase();
+  return codes[upperCode] || null;
+}
+
+// Endpoint to check claim code
 app.post("/check-claim", (req, res) => {
   const { claimId } = req.body;
-  if (!claimId) {
-    return res.status(400).json({ success: false, message: "Missing claim ID" });
-  }
-  const codeEntry = codes.find(c => c.code === claimId.toUpperCase());
 
-  if (!codeEntry) {
-    return res.json({ success: false, message: "Invalid claim code." });
-  }
-  if (codeEntry.used) {
-    return res.json({ success: false, message: "Code already used." });
+  if (!claimId || typeof claimId !== "string") {
+    return res.status(400).json({ success: false, message: "Invalid claim ID." });
   }
 
-  res.json({ success: true, message: codeEntry.winnings });
+  // You can also add your SQLite db check logic here if you want to cross-check codes
+
+  const codeInfo = getCodeInfo(claimId);
+
+  if (codeInfo) {
+    return res.json({ success: true, message: codeInfo.message });
+  } else {
+    return res.json({ success: false, message: "Claim ID not recognized." });
+  }
 });
 
-// Endpoint to submit Discord username
+// Endpoint to save Discord username locally
 app.post("/submit-discord", async (req, res) => {
   const { claimId, discord } = req.body;
-  if (!claimId || !discord) {
-    return res.status(400).json({ success: false, message: "Missing data" });
-  }
 
-  const codeEntry = codes.find(c => c.code === claimId.toUpperCase());
-  if (!codeEntry) {
-    return res.status(400).json({ success: false, message: "Invalid claim ID" });
-  }
-  if (codeEntry.used) {
-    return res.status(400).json({ success: false, message: "Code already used" });
+  if (!claimId || !discord) {
+    return res.status(400).json({ success: false, message: "Missing claim ID or Discord username." });
   }
 
   try {
-    // Mark code as used
-    codeEntry.used = true;
+    // Load existing submissions or create empty array
+    let submissions = [];
+    try {
+      const data = await fs.readFile(submissionsFile, "utf8");
+      submissions = JSON.parse(data);
+    } catch (err) {
+      if (err.code !== "ENOENT") throw err;
+    }
 
-    // Append to Google Sheets
-    await appendToSheet(claimId.toUpperCase(), discord);
+    // Append new submission with timestamp
+    submissions.push({ claimId, discord, timestamp: new Date().toISOString() });
 
-    res.json({ success: true, message: "Saved to Google Sheet" });
+    // Write back to file
+    await fs.writeFile(submissionsFile, JSON.stringify(submissions, null, 2), "utf8");
+
+    return res.json({ success: true, message: "Discord username saved locally." });
   } catch (err) {
-    console.error("Google Sheets Error:", err);
-    res.status(500).json({ success: false, message: "Failed to log to sheet" });
+    console.error("Error saving submission:", err);
+    return res.status(500).json({ success: false, message: "Failed to save Discord username." });
   }
 });
 
-app.listen(PORT, () => {
+app.listen(PORT, async () => {
+  await loadCodes();
   console.log(`✅ Server running on port ${PORT}`);
 });
