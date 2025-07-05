@@ -10,3 +10,4 @@ credentials.jsonnode_modules/
 .env
 credentials.json
 .DS_Store
+codes.json
