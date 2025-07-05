@@ -5,10 +5,17 @@ const cors = require('cors');
 const bodyParser = require('body-parser');
 const dotenv = require('dotenv');
 
+if (!process.env.CLAIM_CODES) {
+  console.error('❌ CLAIM_CODES is NOT set!');
+} else {
+  console.log('✅ CLAIM_CODES loaded:', process.env.CLAIM_CODES.slice(0, 100) + '…');
+}
+
 // Load environment variables from env.env (or .env if you rename it)
-dotenv.config({path:'./env.env.js'});
-require('dotenv').config();
-console.log('🔍 Raw CLAIM_CODES env var:', process.env.CLAIM_CODES && process.env.CLAIM_CODES.slice(0,100) + '…');
+// Change this line in server.js:
+const dotenv = require('dotenv');
+dotenv.config({ path: './env.env' }); // <-- correct file name and no .js
+console.log('🔍 Raw CLAIM_CODES env var:', process.env.CLAIM_CODES && process.env.CLAIM_CODES.slice(0, 100) + '…');
 
 const app = express();
 app.use(cors());
