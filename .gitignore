@@ -9,6 +9,4 @@ node_modules/
 credentials.jsonnode_modules/
 .env
 credentials.json
-codes.json
 .DS_Store
-codes
