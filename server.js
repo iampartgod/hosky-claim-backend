@@ -3,9 +3,11 @@
 const express = require('express');
 const cors = require('cors');
 const bodyParser = require('body-parser');
+const fs = require('fs');
+const path = require('path');
 
-// Load env variables from custom file
-require('dotenv').config({ path: './codes.env' });
+// Load env variables
+require('dotenv').config({ path: './env.env' });
 console.log('🔍 Raw CLAIM_CODES env var:', process.env.CLAIM_CODES && process.env.CLAIM_CODES.slice(0, 100) + '…');
 
 const app = express();
@@ -30,35 +32,59 @@ try {
 }
 // === END STARTUP CHECK ===
 
+// File path for submissions storage
+const submissionsFile = path.join(__dirname, 'submissions.json');
+
+// Helper function to save submission data to JSON file
+function saveSubmission(code, discord) {
+  let submissions = [];
+
+  try {
+    if (fs.existsSync(submissionsFile)) {
+      const data = fs.readFileSync(submissionsFile, 'utf8');
+      submissions = JSON.parse(data);
+    }
+  } catch (err) {
+    console.error('Error reading submissions.json:', err);
+  }
+
+  submissions.push({
+    code,
+    discord,
+    timestamp: new Date().toISOString(),
+  });
+
+  try {
+    fs.writeFileSync(submissionsFile, JSON.stringify(submissions, null, 2), 'utf8');
+  } catch (err) {
+    console.error('Error writing submissions.json:', err);
+  }
+}
+
 // Keep track of used codes in memory
 const usedCodes = new Set();
 
 // Claim endpoint
 app.post('/claim', (req, res) => {
   const { code, discord } = req.body;
-  console.log('Received claim request:', req.body);
-
   if (!code || !discord) {
-    console.log('Missing code or discord');
     return res.status(400).json({ success: false, message: 'Please provide both code and Discord handle.' });
   }
 
   const normalized = code.trim().toUpperCase();
-  console.log('Normalized code:', normalized);
-
   if (usedCodes.has(normalized)) {
-    console.log('Code already claimed:', normalized);
     return res.status(400).json({ success: false, message: 'This code has already been claimed.' });
   }
 
   const reward = claimCodes[normalized];
   if (!reward) {
-    console.log('Code not found:', normalized);
     return res.status(404).json({ success: false, message: 'Claim ID not recognized.' });
   }
 
   usedCodes.add(normalized);
-  console.log(`Code ${normalized} claimed by ${discord}`);
+  console.log(`✅ Code ${normalized} claimed by ${discord}`);
+
+  saveSubmission(normalized, discord); // Save to submissions.json
 
   return res.json({ success: true, message: reward });
 });
