@@ -92,7 +92,7 @@
     <input type="text" id="claimId" placeholder="Enter Claim ID" />
     <input type="text" id="discordName" placeholder="Enter Discord username (e.g. User#1234)" />
     <br />
-    <button onclick="claimCode()">CLAIM</button>
+    <button onclick="claimCode(event)">CLAIM</button>
     <div id="result"></div>
   </div>
 
@@ -103,7 +103,7 @@
   <script>
     const API_CLAIM = "https://hosky-claim-backend.onrender.com/claim";
 
-    async function claimCode() {
+    async function claimCode(event) {
       const code = document.getElementById("claimId").value.trim().toUpperCase();
       const discord = document.getElementById("discordName").value.trim();
       const resultDiv = document.getElementById("result");
@@ -123,50 +123,50 @@
       }
 
       try {
-  const res = await fetch(API_CLAIM, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ code, discord })
-  });
+        const res = await fetch(API_CLAIM, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ code, discord })
+        });
 
-  if (!res.ok) {
-    // If server returns HTTP error code, try to read error message from JSON or fallback
-    let errorData = {};
-    try {
-      errorData = await res.json();
-    } catch {
-      // Ignore JSON parse errors here
+        if (!res.ok) {
+          let errorData = {};
+          try {
+            errorData = await res.json();
+          } catch {
+            // ignore JSON parse errors
+          }
+          const errorMsg = errorData.message || 'Server returned an error.';
+          document.getElementById("failSound").play();
+          resultDiv.innerHTML = `<div class="hosky-doge">🙈</div><p>${errorMsg}</p>`;
+          return;
+        }
+
+        const data = await res.json();
+
+        if (data.success) {
+          confetti({ particleCount: 150, spread: 100, origin: { y: 0.6 } });
+          document.getElementById("winSound").play();
+
+          resultDiv.innerHTML = `
+            <div class="hosky-doge">🐶</div>
+            <p>${data.message[0]}</p>
+            <p>Claim successful for code <strong>${code}</strong> and Discord <strong>${discord}</strong>.</p>
+          `;
+
+          // Disable inputs and button to prevent multiple claims
+          event.target.disabled = true;
+          document.getElementById("claimId").disabled = true;
+          document.getElementById("discordName").disabled = true;
+
+        } else {
+          document.getElementById("failSound").play();
+          resultDiv.innerHTML = `<div class="hosky-doge">🙈</div><p>${data.message}</p>`;
+        }
+      } catch (e) {
+        resultDiv.innerHTML = "⚠️ Server error. Please try again later.";
+      }
     }
-    const errorMsg = errorData.message || 'Server returned an error.';
-    document.getElementById("failSound").play();
-    resultDiv.innerHTML = `<div class="hosky-doge">🙈</div><p>${errorMsg}</p>`;
-    return;
-  }
-
-  const data = await res.json();
-
-  if (data.success) {
-    confetti({ particleCount: 150, spread: 100, origin: { y: 0.6 } });
-    document.getElementById("winSound").play();
-
-    resultDiv.innerHTML = `
-      <div class="hosky-doge">🐶</div>
-      <p>${data.message[0]}</p>
-      <p>Claim successful for code <strong>${code}</strong> and Discord <strong>${discord}</strong>.</p>
-    `;
-
-    // Disable inputs and button
-    event.target.disabled = true;
-    document.getElementById("claimId").disabled = true;
-    document.getElementById("discordName").disabled = true;
-
-  } else {
-    document.getElementById("failSound").play();
-    resultDiv.innerHTML = `<div class="hosky-doge">🙈</div><p>${data.message}</p>`;
-  }
-} catch (e) {
-  resultDiv.innerHTML = "⚠️ Server error. Please try again later.";
-}
   </script>
 
 </body>
