@@ -19,7 +19,7 @@ const auth = new google.auth.GoogleAuth({
   scopes: ["https://www.googleapis.com/auth/spreadsheets"],
 });
 
-const SPREADSHEET_ID = "YOUR_SPREADSHEET_ID_HERE"; // replace this
+const SPREADSHEET_ID = process.env.1LDf06w9j8mw3Np6tOmjeust3ywRhcOSlabmJ-mGZSUE;
 const SHEET_NAME = "Winners"; // name of the sheet/tab (e.g., "Winners")
 
 async function appendToSheet(claimId, discordUsername) {
@@ -27,8 +27,8 @@ async function appendToSheet(claimId, discordUsername) {
   const sheets = google.sheets({ version: "v4", auth: client });
 
   await sheets.spreadsheets.values.append({
-    spreadsheetId: SPREADSHEET_ID,
-    range: `${SHEET_NAME}!A:B`,
+    spreadsheetId: 1LDf06w9j8mw3Np6tOmjeust3ywRhcOSlabmJ-mGZSUE,
+    range: `${HOSKY Winners}!A:B`,
     valueInputOption: "USER_ENTERED",
     requestBody: {
       values: [[claimId, discordUsername]],
