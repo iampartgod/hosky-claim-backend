@@ -5,9 +5,8 @@ const cors = require('cors');
 const bodyParser = require('body-parser');
 const fs = require('fs');
 const path = require('path');
+require('dotenv').config({ path: './codes.env' });
 
-// Load env variables
-require('dotenv').config({ path: './env.env' });
 console.log('🔍 Raw CLAIM_CODES env var:', process.env.CLAIM_CODES && process.env.CLAIM_CODES.slice(0, 100) + '…');
 
 const app = express();
@@ -32,37 +31,32 @@ try {
 }
 // === END STARTUP CHECK ===
 
-// File path for submissions storage
-const submissionsFile = path.join(__dirname, 'submissions.json');
+// Keep track of used codes in memory
+const usedCodes = new Set();
 
-// Helper function to save submission data to JSON file
-function saveSubmission(code, discord) {
-  let submissions = [];
+// Path to submissions file
+const submissionsPath = path.join(__dirname, 'submissions.json');
 
+// Load existing submissions or initialize empty array
+let submissions = [];
+if (fs.existsSync(submissionsPath)) {
   try {
-    if (fs.existsSync(submissionsFile)) {
-      const data = fs.readFileSync(submissionsFile, 'utf8');
-      submissions = JSON.parse(data);
-    }
+    const data = fs.readFileSync(submissionsPath, 'utf8');
+    submissions = JSON.parse(data);
   } catch (err) {
-    console.error('Error reading submissions.json:', err);
-  }
-
-  submissions.push({
-    code,
-    discord,
-    timestamp: new Date().toISOString(),
-  });
-
-  try {
-    fs.writeFileSync(submissionsFile, JSON.stringify(submissions, null, 2), 'utf8');
-  } catch (err) {
-    console.error('Error writing submissions.json:', err);
+    console.warn('⚠️ Failed to read or parse submissions.json, starting fresh.');
+    submissions = [];
   }
 }
 
-// Keep track of used codes in memory
-const usedCodes = new Set();
+// Save submissions to file helper
+function saveSubmissions() {
+  try {
+    fs.writeFileSync(submissionsPath, JSON.stringify(submissions, null, 2));
+  } catch (err) {
+    console.error('❌ Failed to save submissions.json:', err.message);
+  }
+}
 
 // Claim endpoint
 app.post('/claim', (req, res) => {
@@ -81,10 +75,19 @@ app.post('/claim', (req, res) => {
     return res.status(404).json({ success: false, message: 'Claim ID not recognized.' });
   }
 
+  // Mark code as used
   usedCodes.add(normalized);
-  console.log(`✅ Code ${normalized} claimed by ${discord}`);
 
-  saveSubmission(normalized, discord); // Save to submissions.json
+  // Save submission
+  submissions.push({
+    code: normalized,
+    discord: discord.trim(),
+    reward,
+    claimedAt: new Date().toISOString()
+  });
+  saveSubmissions();
+
+  console.log(`✅ Code ${normalized} claimed by ${discord}`);
 
   return res.json({ success: true, message: reward });
 });
