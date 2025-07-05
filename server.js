@@ -11,44 +11,21 @@ const PORT = process.env.PORT || 3000;
 app.use(cors());
 app.use(express.json());
 
-// Open or create the database
 const db = new sqlite3.Database("./claims.db");
 
-// Create the claim_codes table if it doesn't exist
-db.run(`CREATE TABLE IF NOT EXISTS claim_codes (
-  code TEXT PRIMARY KEY,
-  used INTEGER DEFAULT 0,
-  winnings TEXT
-)`, (err) => {
-  if (err) {
-    console.error("Error creating claim_codes table:", err.message);
-  } else {
-    console.log("✅ claim_codes table is ready");
-    
-    // Insert sample data if table is empty
-    db.get("SELECT COUNT(*) AS count FROM claim_codes", (err, row) => {
-      if (err) {
-        console.error("Error counting claim_codes rows:", err.message);
-      } else if (row.count === 0) {
-        const stmt = db.prepare("INSERT INTO claim_codes (code, used, winnings) VALUES (?, ?, ?)");
-        stmt.run("IAMPARTGOD", 0, "10 HOSKY");
-        stmt.run("ABC123", 0, "5 HOSKY");
-        stmt.finalize();
-        console.log("✅ Sample claim codes inserted");
-      }
-    });
-  }
-});
-
-// Google Sheets auth setup
+// Load Google Sheets credentials and auth
 const auth = new google.auth.GoogleAuth({
-  keyFile: "credentials.json", // your service account JSON file path
+  keyFile: "credentials.json", // your downloaded JSON key, do NOT commit
   scopes: ["https://www.googleapis.com/auth/spreadsheets"],
 });
 
-const SPREADSHEET_ID = process.env.SPREADSHEET_ID;  // from your .env file
-const SHEET_NAME = "Winners";  // your sheet/tab name
+const SPREADSHEET_ID = process.env.SPREADSHEET_ID; // your Google Sheet ID here
+const SHEET_NAME = "Winners"; // tab name in your sheet
 
+// Load claim codes and winnings from external JSON (not committed)
+const codes = require("./codes.json");
+
+// Function to append claim info to Google Sheet
 async function appendToSheet(claimId, discordUsername) {
   const client = await auth.getClient();
   const sheets = google.sheets({ version: "v4", auth: client });
@@ -63,55 +40,51 @@ async function appendToSheet(claimId, discordUsername) {
   });
 }
 
-// API endpoint to check claim codes
+// Endpoint to check claim validity and status
 app.post("/check-claim", (req, res) => {
-  const claimId = req.body.claimId?.toUpperCase();
-
+  const { claimId } = req.body;
   if (!claimId) {
-    return res.status(400).json({ success: false, message: "No claim ID provided" });
+    return res.status(400).json({ success: false, message: "Missing claim ID" });
+  }
+  const codeEntry = codes.find(c => c.code === claimId.toUpperCase());
+
+  if (!codeEntry) {
+    return res.json({ success: false, message: "Invalid claim code." });
+  }
+  if (codeEntry.used) {
+    return res.json({ success: false, message: "Code already used." });
   }
 
-  db.get("SELECT used, winnings FROM claim_codes WHERE code = ?", [claimId], (err, row) => {
-    if (err) {
-      console.error("DB error:", err);
-      return res.status(500).json({ success: false, message: "Database error" });
-    }
-
-    if (!row) {
-      return res.json({ success: false, message: "Invalid claim code." });
-    }
-
-    if (row.used) {
-      return res.json({ success: false, message: "This claim code has already been used." });
-    }
-
-    return res.json({ success: true, message: `Congrats! You won ${row.winnings}` });
-  });
+  res.json({ success: true, message: codeEntry.winnings });
 });
 
-// API endpoint to submit Discord username and mark claim used
+// Endpoint to submit Discord username
 app.post("/submit-discord", async (req, res) => {
   const { claimId, discord } = req.body;
-
   if (!claimId || !discord) {
     return res.status(400).json({ success: false, message: "Missing data" });
   }
 
-  // Mark code as used
-  db.run("UPDATE claim_codes SET used = 1 WHERE code = ?", [claimId], async (err) => {
-    if (err) {
-      console.error("DB update error:", err);
-      return res.status(500).json({ success: false, message: "Failed to update claim status" });
-    }
+  const codeEntry = codes.find(c => c.code === claimId.toUpperCase());
+  if (!codeEntry) {
+    return res.status(400).json({ success: false, message: "Invalid claim ID" });
+  }
+  if (codeEntry.used) {
+    return res.status(400).json({ success: false, message: "Code already used" });
+  }
 
-    try {
-      await appendToSheet(claimId, discord);
-      res.json({ success: true, message: "Saved to Google Sheet" });
-    } catch (err) {
-      console.error("Google Sheets Error:", err);
-      res.status(500).json({ success: false, message: "Failed to log to sheet" });
-    }
-  });
+  try {
+    // Mark code as used
+    codeEntry.used = true;
+
+    // Append to Google Sheets
+    await appendToSheet(claimId.toUpperCase(), discord);
+
+    res.json({ success: true, message: "Saved to Google Sheet" });
+  } catch (err) {
+    console.error("Google Sheets Error:", err);
+    res.status(500).json({ success: false, message: "Failed to log to sheet" });
+  }
 });
 
 app.listen(PORT, () => {
