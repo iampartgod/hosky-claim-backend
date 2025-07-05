@@ -13,3 +13,4 @@ credentials.json
 codes.json
 env.env
 env.env.json
+env.env.js
