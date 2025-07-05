@@ -14,3 +14,5 @@ codes.json
 env.env
 env.env.json
 env.env.js
+codes.env
+codes.env.js
