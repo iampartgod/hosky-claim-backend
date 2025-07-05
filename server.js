@@ -1,58 +1,56 @@
 const express = require('express');
 const cors = require('cors');
-const fs = require('fs');
-require('dotenv').config();
+const bodyParser = require('body-parser');
+const dotenv = require('dotenv');
+
+dotenv.config({ path: './env.env' }); // Use your custom env filename
 
 const app = express();
-const PORT = process.env.PORT || 10000;
-
 app.use(cors());
-app.use(express.json());
+app.use(bodyParser.json());
 
 let claimCodes = {};
 
+// Load CLAIM_CODES from environment variable
 try {
   if (process.env.CLAIM_CODES) {
     claimCodes = JSON.parse(process.env.CLAIM_CODES);
-    console.log('✅ CLAIM_CODES loaded successfully');
+    console.log('✅ Claim codes loaded successfully from env.');
   } else {
-    console.warn('⚠️ CLAIM_CODES environment variable is missing.');
+    console.warn('⚠️ CLAIM_CODES not found in environment variables.');
   }
 } catch (err) {
-  console.error('❌ Failed to parse CLAIM_CODES from env:', err);
+  console.error('❌ Failed to parse CLAIM_CODES from env:', err.message);
 }
 
-const claimsLogFile = 'claims.log';
+const usedCodes = new Set();
 
-function logClaim(code, discord) {
-  const timestamp = new Date().toISOString();
-  const logEntry = `${timestamp} - CODE: ${code} - DISCORD: ${discord || 'N/A'}\n`;
-  fs.appendFile(claimsLogFile, logEntry, (err) => {
-    if (err) {
-      console.error('Failed to log claim:', err);
-    }
-  });
-}
+app.post('/claim', (req, res) => {
+  const { code } = req.body;
+  if (!code) return res.status(400).json({ success: false, message: 'No code provided.' });
 
-app.post('/claim', async (req, res) => {
-  const { code, discord } = req.body;
+  const codeUpper = code.toUpperCase();
 
-  if (!code || typeof code !== 'string') {
-    return res.status(400).send('Claim ID not recognized.');
+  if (usedCodes.has(codeUpper)) {
+    return res.status(400).json({ success: false, message: 'Code has already been claimed.' });
   }
 
-  const normalizedCode = code.trim().toUpperCase();
-  const rewardMessage = claimCodes[normalizedCode];
-
-  if (!rewardMessage) {
-    return res.status(404).send('Claim ID not recognized.');
+  if (claimCodes[codeUpper]) {
+    usedCodes.add(codeUpper);
+    const [message, amount] = claimCodes[codeUpper];
+    return res.json({ success: true, message, amount });
+  } else {
+    return res.status(404).json({ success: false, message: 'Claim ID not recognized.' });
   }
-
-  logClaim(normalizedCode, discord);
-
-  res.send(rewardMessage);
 });
 
-app.listen(PORT, () => {
-  console.log(`✅ Server running on port ${PORT}`);
+// Fallback route
+app.get('/', (req, res) => {
+  res.send('🚀 HOSKY Claim API is running!');
+});
+
+// Start the server
+const port = process.env.PORT || 10000;
+app.listen(port, () => {
+  console.log(`✅ Server running on port ${port}`);
 });
